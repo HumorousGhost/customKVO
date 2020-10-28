@@ -214,7 +214,7 @@ static void customSetter(id self, SEL _cmd, id newValue) {
     }
     
     if (observerArray.count <= 0) {
-        // 指回给父类
+        // 指回给父类，注当前类为 CTKVONotifying_ 的子类
         Class superClass = [self superclass];
         object_setClass(self, superClass);
     }
