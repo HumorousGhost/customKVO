@@ -75,10 +75,10 @@ static NSString *const kCTKVOAssiociateKey = @"CTKVO_AssiociateKey";
 @implementation NSObject (KVO)
 
 + (void)load {
-//    static dispatch_once_t onceToken;
-//    dispatch_once(&onceToken, ^{
-//        [self customHookOrigInstanceMethod:NSSelectorFromString(@"dealloc") newInstanceMethod:@selector(customDealloc)];
-//    });
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        [self customHookOrigInstanceMethod:NSSelectorFromString(@"dealloc") newInstanceMethod:@selector(customDealloc)];
+    });
 }
 
 + (BOOL)customHookOrigInstanceMethod:(SEL)oriSEL newInstanceMethod:(SEL)swizzledSEL {
@@ -107,7 +107,15 @@ static NSString *const kCTKVOAssiociateKey = @"CTKVO_AssiociateKey";
     [self customAddObserver:observer forKeyPath:keyPath options:options context:context handlerBlock:nil];
 }
 
-- (void)customAddObserver:(NSObject *)observer forKeyPath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options context:(void *)context handlerBlock:(nullable CTKVOBlock)handlerBlock {
+- (void)customAddObserver:(NSObject *)observer forKeyPath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options context:(void *)context action:(SEL)action {
+    [self customAddObserver:observer forKeyPath:keyPath options:options context:context handlerBlock:nil action:action];
+}
+
+- (void)customAddObserver:(NSObject *)observer forKeyPath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options context:(void *)context handlerBlock:(CTKVOBlock)handlerBlock {
+    [self customAddObserver:observer forKeyPath:keyPath options:options context:context handlerBlock:handlerBlock action:NULL];
+}
+
+- (void)customAddObserver:(NSObject *)observer forKeyPath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options context:(nullable void *)context handlerBlock:(nullable CTKVOBlock)handlerBlock action:(nullable SEL)action {
     // 验证是否存在setter方法
     [self judgeSetterMethodFromKeyPath:keyPath];
     // 动态生成子类
@@ -115,7 +123,7 @@ static NSString *const kCTKVOAssiociateKey = @"CTKVO_AssiociateKey";
     // 修改isa指向
     object_setClass(self, newClass);
     // 保存观察者信息
-    CTKVOInfo *info = [[CTKVOInfo alloc] initWithObserver:observer forKeyPath:keyPath options:options block:handlerBlock action:NULL context:context];
+    CTKVOInfo *info = [[CTKVOInfo alloc] initWithObserver:observer forKeyPath:keyPath options:options block:handlerBlock action:action context:context];
     NSMutableArray *observerArray = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)(kCTKVOAssiociateKey));
     if (!observerArray) {
         observerArray = [NSMutableArray arrayWithCapacity:1];
@@ -196,6 +204,14 @@ static void customSetter(id self, SEL _cmd, id newValue) {
             break;
         } else if ([info.keyPath isEqualToString:keyPath] && [info.observer respondsToSelector:@selector(customObserveValueForKeyPath:ofObject:change:context:)]) {
             [info.observer customObserveValueForKeyPath:keyPath ofObject:info.observer change:@{@"oldValue": oldValue ? oldValue : @"", @"newValue": newValue} context:info.context];
+            break;
+        } else if ([info.keyPath isEqualToString:keyPath] && [info.observer respondsToSelector:info.action]) {
+            NSDictionary *infoDic = @{@"observer": info.observer, @"keyPath": info.keyPath, @"oldValue": oldValue ? oldValue : @"", @"newValue": newValue};
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+            [info.observer performSelector:info.action withObject:infoDic];
+#pragma clang pop
+            break;
         }
     }
 }
@@ -225,6 +241,11 @@ Class customClass(id self, SEL _cmd) {
 }
 
 - (void)customDealloc {
+    NSString *classString = NSStringFromClass(self.class);
+    if ([classString hasPrefix:kCTKVOPrefix]) {
+        Class superClass = [self superclass];
+        object_setClass(self, superClass);
+    }
     [self customDealloc];
 }
 

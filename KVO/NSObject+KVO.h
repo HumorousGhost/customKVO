@@ -16,6 +16,9 @@ typedef void(^CTKVOBlock)(id observer, NSString *keyPath, id oldValue, id newVal
 - (void)customAddObserver:(NSObject *)observer forKeyPath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options context:(nullable void *)context;
 // 添加监听函数
 - (void)customAddObserver:(NSObject *)observer forKeyPath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options context:(nullable void *)context handlerBlock:(nullable CTKVOBlock)handlerBlock;
+
+- (void)customAddObserver:(NSObject *)observer forKeyPath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options context:(nullable void *)context action:(nullable SEL)action;
+
 // 移除监听函数
 - (void)customRemoveObserver:(NSObject *)observer forKeyPath:(NSString *)keyPath;
 
