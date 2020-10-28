@@ -50,23 +50,6 @@
     return [self initWithObserver:observer forKeyPath:keyPath options:options block:NULL action:NULL context:context];
 }
 
-- (NSUInteger)hash {
-    return [self.keyPath hash];
-}
-
-- (BOOL)isEqual:(id)object {
-    if (nil == object) {
-        return false;
-    }
-    if (self == object) {
-        return true;
-    }
-    if (![object isKindOfClass:self.class]) {
-        return false;
-    }
-    return [self.keyPath isEqualToString:((CTKVOInfo *)object)->_keyPath];
-}
-
 @end
 
 static NSString *const kCTKVOPrefix = @"CTKVONotifying_";
@@ -242,9 +225,13 @@ Class customClass(id self, SEL _cmd) {
 
 - (void)customDealloc {
     NSString *classString = NSStringFromClass(self.class);
+//    NSLog(@"classString = %@", classString);
     if ([classString hasPrefix:kCTKVOPrefix]) {
         Class superClass = [self superclass];
         object_setClass(self, superClass);
+    }
+    if ([classString hasSuffix:@"Person"]) {
+        NSLog(@"classString = %@", classString);
     }
     [self customDealloc];
 }
