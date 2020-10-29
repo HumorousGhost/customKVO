@@ -29,6 +29,7 @@ typedef void(^CTKVOBlock)(id observer, NSString *keyPath, NSDictionary<NSKeyValu
 // 监听回调函数
 - (void)customObserveValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey, id> *)change context:(void *)context;
 
+// 是否自动
 + (BOOL)customAutomaticallyNotifiesObserversForKey:(NSString *)akey;
 
 - (void)customWillChangeValueForKey:(NSString *)key;

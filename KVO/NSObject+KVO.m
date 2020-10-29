@@ -477,6 +477,10 @@ static void customDealloc(id self, SEL _cmd) {
         [observerMap removeAllObjects];
         objc_setAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateKey, observerMap, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
+    NSMutableArray *keyArray = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateArrayKey);
+    if (keyArray.count > 0) {
+        [keyArray removeAllObjects];
+    }
     Class superClass = [self class];
     object_setClass(self, superClass);
 }
