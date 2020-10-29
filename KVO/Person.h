@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, copy) NSString *nickName;
+@property (nonatomic, assign) NSInteger age;
 @property (nonatomic, strong) NSMutableArray *dataArray;
 
 + (instancetype)shareHandler;
