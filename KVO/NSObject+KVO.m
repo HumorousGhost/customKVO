@@ -244,6 +244,8 @@ static void customSetter(id self, SEL _cmd, id newValue) {
 #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
         [info.observer performSelector:info.action withObject:infoDic];
 #pragma clang pop
+    } else if ([info.observer respondsToSelector:@selector(observeValueForKeyPath:ofObject:change:context:)]) {
+        [info.observer observeValueForKeyPath:info.keyPath ofObject:info.observer change:change context:info.context];
     }
 }
 
