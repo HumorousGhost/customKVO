@@ -18,4 +18,8 @@
     return person;
 }
 
+//- (void)dealloc {
+//    NSLog(@"laile = %s", __func__);
+//}
+
 @end

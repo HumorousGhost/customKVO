@@ -9,7 +9,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef void(^CTKVOBlock)(id observer, NSString *keyPath, id oldValue, id newValue, void * context);
+// KVO 响应式 + 函数式
+// y = f(x) 可以转化为 y = f(f(z))
+// 其中 x = f(z)，即x变成一个函数传入
+// 那么x就为block
+typedef void(^CTKVOBlock)(id observer, NSString *keyPath, NSDictionary<NSKeyValueChangeKey, id> *change, void * context);
 
 @interface NSObject (KVO)
 // 添加监听函数
@@ -23,7 +27,7 @@ typedef void(^CTKVOBlock)(id observer, NSString *keyPath, id oldValue, id newVal
 - (void)customRemoveObserver:(NSObject *)observer forKeyPath:(NSString *)keyPath;
 
 // 监听回调函数
-- (void)customObserveValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context;
+- (void)customObserveValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey, id> *)change context:(void *)context;
 
 @end
 

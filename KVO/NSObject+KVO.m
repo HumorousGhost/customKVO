@@ -57,12 +57,12 @@ static NSString *const kCTKVOAssiociateKey = @"CTKVO_AssiociateKey";
 
 @implementation NSObject (KVO)
 
-+ (void)load {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        [self customHookOrigInstanceMethod:NSSelectorFromString(@"dealloc") newInstanceMethod:@selector(customDealloc)];
-    });
-}
+//+ (void)load {
+//    static dispatch_once_t onceToken;
+//    dispatch_once(&onceToken, ^{
+//        [self customHookOrigInstanceMethod:NSSelectorFromString(@"dealloc") newInstanceMethod:@selector(myDealloc)];
+//    });
+//}
 
 + (BOOL)customHookOrigInstanceMethod:(SEL)oriSEL newInstanceMethod:(SEL)swizzledSEL {
     Class cls = self;
@@ -103,16 +103,22 @@ static NSString *const kCTKVOAssiociateKey = @"CTKVO_AssiociateKey";
     [self judgeSetterMethodFromKeyPath:keyPath];
     // 动态生成子类
     Class newClass = [self createChildClassWithKeyPath:keyPath];
+    // 添加setter方法
+    SEL setterSel = NSSelectorFromString(setterForGetter(keyPath));
+    Method method = class_getInstanceMethod(self.class, setterSel);
+    const char *type = method_getTypeEncoding(method);
+    class_addMethod(newClass, setterSel, (IMP)customSetter, type);
     // 修改isa指向
     object_setClass(self, newClass);
+    
     // 保存观察者信息
     CTKVOInfo *info = [[CTKVOInfo alloc] initWithObserver:observer forKeyPath:keyPath options:options block:handlerBlock action:action context:context];
-    NSMutableArray *observerArray = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)(kCTKVOAssiociateKey));
-    if (!observerArray) {
-        observerArray = [NSMutableArray arrayWithCapacity:1];
-        objc_setAssociatedObject(self, (__bridge const void * _Nonnull)(kCTKVOAssiociateKey), observerArray, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    NSMutableDictionary *observerMap = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)(kCTKVOAssiociateKey));
+    if (!observerMap) {
+        observerMap = [NSMutableDictionary dictionary];
+        objc_setAssociatedObject(self, (__bridge const void * _Nonnull)(kCTKVOAssiociateKey), observerMap, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
-    [observerArray addObject:info];
+    [observerMap setObject:info forKey:info.keyPath];
 }
 
 #pragma mark - 验证是否存在setter方法
@@ -121,7 +127,7 @@ static NSString *const kCTKVOAssiociateKey = @"CTKVO_AssiociateKey";
     SEL setterSelector = NSSelectorFromString(setterForGetter(keyPath));
     Method setterMethod = class_getInstanceMethod(superClass, setterSelector);
     if (!setterMethod) {
-        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:[NSString stringWithFormat:@"当前%@没有实现setter方法", keyPath] userInfo:nil];
+        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:[NSString stringWithFormat:@"当前%@没有实现setter的%@方法",self, keyPath] userInfo:nil];
     }
 }
 
@@ -149,7 +155,7 @@ static NSString *getterForSetter(NSString *setter) {
 
 #pragma mark - 注册添加子类
 - (Class)createChildClassWithKeyPath:(NSString *)keyPath {
-    NSString *oldClassName = NSStringFromClass(self.class);
+    NSString *oldClassName = NSStringFromClass([self class]);
     NSString *newClassName = [NSString stringWithFormat:@"%@%@", kCTKVOPrefix, oldClassName];
     Class newClass = NSClassFromString(newClassName);
     // 判断是否已经创建过
@@ -157,83 +163,99 @@ static NSString *getterForSetter(NSString *setter) {
         return newClass;
     }
     // 申请类
-    newClass = objc_allocateClassPair(self.class, newClassName.UTF8String, 0);
+    newClass = objc_allocateClassPair([self class], newClassName.UTF8String, 0);
     // 注册类
     objc_registerClassPair(newClass);
-    // 添加方法
-    SEL setterSel = NSSelectorFromString(setterForGetter(keyPath));
-    Method method = class_getInstanceMethod(self.class, setterSel);
-    const char *type = method_getTypeEncoding(method);
-    class_addMethod(newClass, setterSel, (IMP)customSetter, type);
+    // 添加class方法
+    SEL classSel = NSSelectorFromString(@"class");
+    Method classMethod = class_getInstanceMethod([self class], classSel);
+    const char *classType = method_getTypeEncoding(classMethod);
+    class_addMethod(newClass, classSel, (IMP)customClass, classType);
+    
+    // 添加dealloc方法
+    SEL deallocSel = NSSelectorFromString(@"dealloc");
+    Method deallocMethod = class_getInstanceMethod([self class], deallocSel);
+    const char *deallocType = method_getTypeEncoding(deallocMethod);
+    class_addMethod(newClass, deallocSel, (IMP)customDealloc, deallocType);
+    // 添加_isKVO方法
+//    SEL isKVOSel = NSSelectorFromString(@"_isKVO");
+//    Method isKVOMethod = class_getInstanceMethod(self.class, isKVOSel);
+//    const char *isKVOType = method_getTypeEncoding(isKVOMethod);
+//    class_addMethod(newClass, isKVOSel, (IMP)_isKVO, isKVOType);
+    
     return newClass;
 }
 
-static void customSetter(id self, SEL _cmd, id newValue) {
-    NSString *keyPath = getterForSetter(NSStringFromSelector(_cmd));
-    id oldValue = [self valueForKey:keyPath];
-    // 消息转发，转发给父类
-    void (*ct_msgSendSuper)(void *, SEL, id) = (void *)objc_msgSendSuper;
-    struct objc_super superStruct = {
-        .receiver = self,
-        .super_class = class_getSuperclass(object_getClass(self)),
-    };
-    ct_msgSendSuper(&superStruct, _cmd, newValue);
-    
-    // 信息数据回调
-    NSMutableArray *array = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateKey);
-    for (CTKVOInfo *info in array) {
-        if ([info.keyPath isEqualToString:keyPath] && info.handleBlock) {
-            info.handleBlock(info.observer, keyPath, oldValue, newValue, info.context);
-            break;
-        } else if ([info.keyPath isEqualToString:keyPath] && [info.observer respondsToSelector:@selector(customObserveValueForKeyPath:ofObject:change:context:)]) {
-            [info.observer customObserveValueForKeyPath:keyPath ofObject:info.observer change:@{@"oldValue": oldValue ? oldValue : @"", @"newValue": newValue} context:info.context];
-            break;
-        } else if ([info.keyPath isEqualToString:keyPath] && [info.observer respondsToSelector:info.action]) {
-            NSDictionary *infoDic = @{@"observer": info.observer, @"keyPath": info.keyPath, @"oldValue": oldValue ? oldValue : @"", @"newValue": newValue};
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
-            [info.observer performSelector:info.action withObject:infoDic];
-#pragma clang pop
-            break;
-        }
-    }
-}
-
-- (void)customRemoveObserver:(NSObject *)observer forKeyPath:(NSString *)keyPath {
-    NSMutableArray *observerArray = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateKey);
-    if (observerArray.count <= 0) {
-        return;
-    }
-    for (CTKVOInfo *info in observerArray) {
-        if ([info.keyPath isEqualToString:keyPath]) {
-            [observerArray removeObject:info];
-            objc_setAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateKey, observerArray, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-            break;
-        }
-    }
-    
-    if (observerArray.count <= 0) {
-        // 指回给父类，注当前类为 CTKVONotifying_ 的子类
-        Class superClass = [self superclass];
-        object_setClass(self, superClass);
-    }
+BOOL _isKVO(id self, SEL _cmd) {
+    return true;
 }
 
 Class customClass(id self, SEL _cmd) {
     return class_getSuperclass(object_getClass(self));
 }
 
-- (void)customDealloc {
-    NSString *classString = NSStringFromClass(self.class);
-//    NSLog(@"classString = %@", classString);
-    if ([classString hasPrefix:kCTKVOPrefix]) {
-        Class superClass = [self superclass];
-        object_setClass(self, superClass);
+static void customDealloc(id self, SEL _cmd) {
+    NSLog(@"走了这里");
+//    NSMutableDictionary *observerMap = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateKey);
+//    if (observerMap.count > 0) {
+//        [observerMap removeAllObjects];
+//        objc_setAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateKey, observerMap, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+//    }
+    Class superClass = [self class];
+    object_setClass(self, superClass);
+//    [self customDealloc];
+//    NSLog(@"self = %@", self);
+}
+
+static void customSetter(id self, SEL _cmd, id newValue) {
+    NSLog(@"来了:%@", newValue);
+    NSString *keyPath = getterForSetter(NSStringFromSelector(_cmd));
+    id oldValue = [self valueForKey:keyPath];
+    // 消息转发，转发给父类
+    void (*custom_msgSendSuper)(void *, SEL, id) = (void *)objc_msgSendSuper;
+    struct objc_super superStruct = {
+        .receiver = self,
+        .super_class = class_getSuperclass(object_getClass(self)),
+    };
+    custom_msgSendSuper(&superStruct, _cmd, newValue);
+    
+    // 信息数据回调
+    NSMutableDictionary *observerMap = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateKey);
+    CTKVOInfo *info = [observerMap objectForKey:keyPath];
+    if (info) {
+        [self customFunctionBlockWithInfo:info oldValue:oldValue newValue:newValue];
     }
-    if ([classString hasSuffix:@"Person"]) {
-        NSLog(@"classString = %@", classString);
+}
+
+- (void)customFunctionBlockWithInfo:(CTKVOInfo *)info oldValue:(NSString *)oldValue newValue:(NSString *)newValue {
+    NSMutableDictionary<NSKeyValueChangeKey, id> *change = [NSMutableDictionary dictionary];
+    if (info.options & (info.options & NSKeyValueObservingOptionNew)) {
+        [change setObject:newValue forKey:NSKeyValueChangeNewKey];
+    } else {
+        [change setObject:oldValue ? oldValue : @"" forKey:NSKeyValueChangeOldKey];
     }
-    [self customDealloc];
+    if (info.handleBlock) {
+        info.handleBlock(info.observer, info.keyPath, change, info.context);
+    } else if ([info.observer respondsToSelector:@selector(customObserveValueForKeyPath:ofObject:change:context:)]) {
+        [info.observer customObserveValueForKeyPath:info.keyPath ofObject:info.observer change:change context:info.context];
+    } else if ([info.observer respondsToSelector:info.action]) {
+        NSDictionary *infoDic = @{@"observer": info.observer, @"keyPath": info.keyPath, @"change": change};
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+        [info.observer performSelector:info.action withObject:infoDic];
+#pragma clang pop
+    }
+}
+
+- (void)customRemoveObserver:(NSObject *)observer forKeyPath:(NSString *)keyPath {
+    NSMutableDictionary *observerMap = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateKey);
+    [observerMap removeObjectForKey:keyPath];
+    objc_setAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateKey, observerMap, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    // 指回给父类，注当前类为 CTKVONotifying_ 的子类
+    if (observerMap.count <= 0) {
+//        Class superClass = [self class];
+//        object_setClass(self, superClass);
+    }
 }
 
 @end

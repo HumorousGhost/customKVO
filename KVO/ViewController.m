@@ -7,6 +7,7 @@
 
 #import "ViewController.h"
 #import "PersonViewController.h"
+#import "Person.h"
 
 @interface ViewController ()
 
@@ -24,6 +25,10 @@
     [self.button addTarget:self action:@selector(push) forControlEvents:UIControlEventTouchUpInside];
     self.button.frame = CGRectMake(100, 100, 100, 100);
     [self.view addSubview:self.button];
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    NSLog(@"person - class = %@", [Person class]);
 }
 
 - (void)push {
