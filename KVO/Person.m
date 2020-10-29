@@ -6,6 +6,7 @@
 //
 
 #import "Person.h"
+#import "NSObject+KVO.h"
 
 @implementation Person
 
@@ -16,6 +17,16 @@
         person = [[Person alloc] init];
     });
     return person;
+}
+
++ (BOOL)customAutomaticallyNotifiesObserversForKey:(NSString *)akey {
+    return false;
+}
+
+- (void)setAge:(NSInteger)age {
+    [self customWillChangeValueForKey:@"age"];
+    _age = age;
+    [self customDidChangeValueForKey:@"age"];
 }
 
 //- (void)dealloc {

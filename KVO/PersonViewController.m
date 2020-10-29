@@ -42,6 +42,7 @@
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
 //    self.person.name = [NSString stringWithFormat:@"%@+", self.person.name];
     self.person.age += 1;
+    NSLog(@"age = %d", self.person.age);
 //    self.person.nickName = [NSString stringWithFormat:@"%@*", self.person.nickName];
 //    [[self.person mutableArrayValueForKey:@"dataArray"] addObject:@"1"];
 }

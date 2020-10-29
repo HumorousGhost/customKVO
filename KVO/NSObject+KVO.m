@@ -54,6 +54,7 @@
 
 static NSString *const kCTKVOPrefix = @"CTKVONotifying_";
 static NSString *const kCTKVOAssiociateKey = @"CTKVO_AssiociateKey";
+static NSString *const kCTKVOAssiociateArrayKey = @"CTKVO_AssiociateArrayKey";
 
 @implementation NSObject (KVO)
 
@@ -184,6 +185,15 @@ static void customSetterChar(id self, SEL _cmd, unsigned char newValue) {
     };
     custom_msgSendSuper(&superStruct, _cmd, newValue);
     
+    BOOL (*custom_msgSend)(id, SEL, id) = (void *)objc_msgSend;
+    BOOL isAuto = custom_msgSend([self class], @selector(customAutomaticallyNotifiesObserversForKey:), keyPath);
+    if (!isAuto) {
+        NSMutableArray *keyArray = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateArrayKey);
+        if (!keyArray || ![keyArray containsObject:keyPath]) {
+            return;
+        }
+    }
+    
     // 信息数据回调
     NSMutableDictionary *observerMap = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateKey);
     CTKVOInfo *info = [observerMap objectForKey:keyPath];
@@ -202,6 +212,15 @@ static void customSetterShort(id self, SEL _cmd, unsigned short newValue) {
         .super_class = class_getSuperclass(object_getClass(self)),
     };
     custom_msgSendSuper(&superStruct, _cmd, newValue);
+    
+    BOOL (*custom_msgSend)(id, SEL, id) = (void *)objc_msgSend;
+    BOOL isAuto = custom_msgSend([self class], @selector(customAutomaticallyNotifiesObserversForKey:), keyPath);
+    if (!isAuto) {
+        NSMutableArray *keyArray = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateArrayKey);
+        if (!keyArray || ![keyArray containsObject:keyPath]) {
+            return;
+        }
+    }
     
     // 信息数据回调
     NSMutableDictionary *observerMap = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateKey);
@@ -222,6 +241,15 @@ static void customSetterInt(id self, SEL _cmd, unsigned int newValue) {
     };
     custom_msgSendSuper(&superStruct, _cmd, newValue);
     
+    BOOL (*custom_msgSend)(id, SEL, id) = (void *)objc_msgSend;
+    BOOL isAuto = custom_msgSend([self class], @selector(customAutomaticallyNotifiesObserversForKey:), keyPath);
+    if (!isAuto) {
+        NSMutableArray *keyArray = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateArrayKey);
+        if (!keyArray || ![keyArray containsObject:keyPath]) {
+            return;
+        }
+    }
+    
     // 信息数据回调
     NSMutableDictionary *observerMap = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateKey);
     CTKVOInfo *info = [observerMap objectForKey:keyPath];
@@ -240,6 +268,15 @@ static void customSetterLong(id self, SEL _cmd, unsigned long newValue) {
         .super_class = class_getSuperclass(object_getClass(self)),
     };
     custom_msgSendSuper(&superStruct, _cmd, newValue);
+    
+    BOOL (*custom_msgSend)(id, SEL, id) = (void *)objc_msgSend;
+    BOOL isAuto = custom_msgSend([self class], @selector(customAutomaticallyNotifiesObserversForKey:), keyPath);
+    if (!isAuto) {
+        NSMutableArray *keyArray = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateArrayKey);
+        if (!keyArray || ![keyArray containsObject:keyPath]) {
+            return;
+        }
+    }
     
     // 信息数据回调
     NSMutableDictionary *observerMap = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateKey);
@@ -260,6 +297,14 @@ static void customSetterLongLong(id self, SEL _cmd, unsigned long long newValue)
     };
     custom_msgSendSuper(&superStruct, _cmd, newValue);
     
+    BOOL (*custom_msgSend)(id, SEL, id) = (void *)objc_msgSend;
+    BOOL isAuto = custom_msgSend([self class], @selector(customAutomaticallyNotifiesObserversForKey:), keyPath);
+    if (!isAuto) {
+        NSMutableArray *keyArray = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateArrayKey);
+        if (!keyArray || ![keyArray containsObject:keyPath]) {
+            return;
+        }
+    }
     // 信息数据回调
     NSMutableDictionary *observerMap = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateKey);
     CTKVOInfo *info = [observerMap objectForKey:keyPath];
@@ -278,6 +323,15 @@ static void customSetterFloat(id self, SEL _cmd, float newValue) {
         .super_class = class_getSuperclass(object_getClass(self)),
     };
     custom_msgSendSuper(&superStruct, _cmd, newValue);
+    
+    BOOL (*custom_msgSend)(id, SEL, id) = (void *)objc_msgSend;
+    BOOL isAuto = custom_msgSend([self class], @selector(customAutomaticallyNotifiesObserversForKey:), keyPath);
+    if (!isAuto) {
+        NSMutableArray *keyArray = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateArrayKey);
+        if (!keyArray || ![keyArray containsObject:keyPath]) {
+            return;
+        }
+    }
     
     // 信息数据回调
     NSMutableDictionary *observerMap = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateKey);
@@ -298,6 +352,15 @@ static void customSetterDouble(id self, SEL _cmd, double newValue) {
     };
     custom_msgSendSuper(&superStruct, _cmd, newValue);
     
+    BOOL (*custom_msgSend)(id, SEL, id) = (void *)objc_msgSend;
+    BOOL isAuto = custom_msgSend([self class], @selector(customAutomaticallyNotifiesObserversForKey:), keyPath);
+    if (!isAuto) {
+        NSMutableArray *keyArray = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateArrayKey);
+        if (!keyArray || ![keyArray containsObject:keyPath]) {
+            return;
+        }
+    }
+    
     // 信息数据回调
     NSMutableDictionary *observerMap = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateKey);
     CTKVOInfo *info = [observerMap objectForKey:keyPath];
@@ -317,6 +380,15 @@ static void customSetter(id self, SEL _cmd, id newValue) {
         .super_class = class_getSuperclass(object_getClass(self)),
     };
     custom_msgSendSuper(&superStruct, _cmd, newValue);
+    
+    BOOL (*custom_msgSend)(id, SEL, id) = (void *)objc_msgSend;
+    BOOL isAuto = custom_msgSend([self class], @selector(customAutomaticallyNotifiesObserversForKey:), keyPath);
+    if (!isAuto) {
+        NSMutableArray *keyArray = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateArrayKey);
+        if (!keyArray || ![keyArray containsObject:keyPath]) {
+            return;
+        }
+    }
     
     // 信息数据回调
     NSMutableDictionary *observerMap = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateKey);
@@ -440,6 +512,25 @@ static void customDealloc(id self, SEL _cmd) {
 //        Class superClass = [self class];
 //        object_setClass(self, superClass);
     }
+}
+
++ (BOOL)customAutomaticallyNotifiesObserversForKey:(NSString *)akey {
+    return true;
+}
+
+- (void)customWillChangeValueForKey:(NSString *)key {
+    NSMutableArray *keyArray = objc_getAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateArrayKey);
+    if (!keyArray) {
+        keyArray = [NSMutableArray array];
+        objc_setAssociatedObject(self, (__bridge const void * _Nonnull)kCTKVOAssiociateArrayKey, keyArray, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+    if (![keyArray containsObject:key]) {
+        [keyArray addObject:key];
+    }
+}
+
+- (void)customDidChangeValueForKey:(NSString *)key {
+    
 }
 
 @end
