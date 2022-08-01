@@ -113,6 +113,7 @@
 		98619927254804040070FC27 /* KVO */ = {
 			isa = PBXGroup;
 			children = (
+				D3386E2B2897B5E4008E4AB1 /* Source */,
 				98619928254804040070FC27 /* AppDelegate.h */,
 				98619929254804040070FC27 /* AppDelegate.m */,
 				9861992B254804040070FC27 /* SceneDelegate.h */,
@@ -123,8 +124,6 @@
 				98F88F3C2549083F0054E53D /* PersonViewController.m */,
 				98F88F35254902460054E53D /* Person.h */,
 				98F88F36254902460054E53D /* Person.m */,
-				98619960254804280070FC27 /* NSObject+KVO.h */,
-				98619961254804280070FC27 /* NSObject+KVO.m */,
 				98619931254804040070FC27 /* Main.storyboard */,
 				98619934254804070070FC27 /* Assets.xcassets */,
 				98619936254804070070FC27 /* LaunchScreen.storyboard */,
@@ -150,6 +149,23 @@
 				98619951254804080070FC27 /* Info.plist */,
 			);
 			path = KVOUITests;
+			sourceTree = "<group>";
+		};
+		D3386E2B2897B5E4008E4AB1 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				D3386E2C2897B5EE008E4AB1 /* KVO */,
+			);
+			path = Source;
+			sourceTree = "<group>";
+		};
+		D3386E2C2897B5EE008E4AB1 /* KVO */ = {
+			isa = PBXGroup;
+			children = (
+				98619960254804280070FC27 /* NSObject+KVO.h */,
+				98619961254804280070FC27 /* NSObject+KVO.m */,
+			);
+			path = KVO;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -460,7 +476,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = K7VFV4F476;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = KVO/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -478,7 +494,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = K7VFV4F476;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = KVO/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
